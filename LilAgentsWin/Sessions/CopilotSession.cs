@@ -28,6 +28,7 @@ public sealed class CopilotSession : IAgentSession
 
         _process = Process.Start(psi)!;
         _ = StreamAsync(_cts.Token);
+        _ = DrainStderrAsync(_cts.Token);
         await Task.CompletedTask;
     }
 
@@ -54,6 +55,21 @@ public sealed class CopilotSession : IAgentSession
         catch (OperationCanceledException) { }
         catch (Exception ex) { OnError?.Invoke(ex.Message); }
         finally { OnDone?.Invoke(); }
+    }
+
+    private async Task DrainStderrAsync(CancellationToken ct)
+    {
+        try
+        {
+            while (!_process!.StandardError.EndOfStream && !ct.IsCancellationRequested)
+            {
+                var line = await _process.StandardError.ReadLineAsync(ct);
+                if (line is not null && line.Length > 0)
+                    OnError?.Invoke(line);
+            }
+        }
+        catch (OperationCanceledException) { }
+        catch { }
     }
 
     private static ProcessStartInfo BuildPsi(string binary)

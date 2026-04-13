@@ -63,6 +63,7 @@ public sealed class ClaudeSession : IAgentSession
             ?? throw new InvalidOperationException("Failed to start claude process.");
 
         _ = StreamOutputAsync(_cts.Token);
+        _ = DrainStderrAsync(_cts.Token);
         return Task.CompletedTask;
     }
 
@@ -114,6 +115,21 @@ public sealed class ClaudeSession : IAgentSession
                 _history.Add(new ConversationTurn("assistant", assistant.ToString()));
             OnDone?.Invoke();
         }
+    }
+
+    private async Task DrainStderrAsync(CancellationToken ct)
+    {
+        try
+        {
+            while (!_process!.StandardError.EndOfStream && !ct.IsCancellationRequested)
+            {
+                var line = await _process.StandardError.ReadLineAsync(ct);
+                if (line is not null && line.Length > 0)
+                    OnError?.Invoke(line);
+            }
+        }
+        catch (OperationCanceledException) { }
+        catch { }
     }
 
     private record ConversationTurn(string role, string content);
