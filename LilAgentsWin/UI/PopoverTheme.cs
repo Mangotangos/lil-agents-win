@@ -1,4 +1,3 @@
-using System.Windows.Media;
 
 namespace LilAgentsWin.UI;
 

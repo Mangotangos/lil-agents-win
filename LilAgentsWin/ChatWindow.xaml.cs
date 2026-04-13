@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Media;
 using LilAgentsWin.Core;
 using LilAgentsWin.Sessions;
@@ -123,7 +122,7 @@ public partial class ChatWindow : Window
             case "/copy":
                 var last = _messages.LastOrDefault(m => !m.IsUser);
                 if (last is not null)
-                    Clipboard.SetText(last.Text);
+                    System.Windows.Clipboard.SetText(last.Text);
                 return true;
 
             default:
@@ -196,7 +195,7 @@ public partial class ChatWindow : Window
 
     private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.LeftButton == MouseButtonState.Pressed)
+        if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed)
             DragMove();
     }
 

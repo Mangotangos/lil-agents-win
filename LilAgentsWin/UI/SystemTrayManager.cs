@@ -1,6 +1,15 @@
-using System.Drawing;
 using System.Windows.Forms;
 using LilAgentsWin.Core;
+using DrawingBitmap  = System.Drawing.Bitmap;
+using DrawingBrush   = System.Drawing.Brush;
+using DrawingBrushes = System.Drawing.Brushes;
+using DrawingColor   = System.Drawing.Color;
+using DrawingFont    = System.Drawing.Font;
+using DrawingFontStyle = System.Drawing.FontStyle;
+using DrawingGraphics = System.Drawing.Graphics;
+using DrawingIcon    = System.Drawing.Icon;
+using DrawingPen     = System.Drawing.Pen;
+using DrawingToolStripLabel = System.Windows.Forms.ToolStripLabel;
 
 namespace LilAgentsWin.UI;
 
@@ -43,7 +52,7 @@ public sealed class SystemTrayManager : IDisposable
         var menu = new ContextMenuStrip();
 
         // Header
-        menu.Items.Add(new ToolStripLabel("lil-agents") { Font = new Font("Segoe UI", 9, FontStyle.Bold) });
+        menu.Items.Add(new ToolStripLabel("lil-agents") { Font = new DrawingFont("Segoe UI", 9, DrawingFontStyle.Bold) });
         menu.Items.Add(new ToolStripSeparator());
 
         // Provider submenu
@@ -108,18 +117,14 @@ public sealed class SystemTrayManager : IDisposable
 
     private static Icon CreateDefaultIcon()
     {
-        // 16×16 icon drawn with GDI+
-        var bmp = new Bitmap(16, 16);
-        using var g = Graphics.FromImage(bmp);
-        g.Clear(Color.Transparent);
-
-        // Simple robot face
-        g.FillEllipse(Brushes.CornflowerBlue, 2, 2, 12, 12);
-        g.FillEllipse(Brushes.White, 4,  5, 3, 3);
-        g.FillEllipse(Brushes.White, 9,  5, 3, 3);
-        g.DrawArc(new Pen(Color.White, 1.2f), 5, 9, 6, 3, 0, 180);
-
-        return Icon.FromHandle(bmp.GetHicon());
+        var bmp = new DrawingBitmap(16, 16);
+        using var g = DrawingGraphics.FromImage(bmp);
+        g.Clear(DrawingColor.Transparent);
+        g.FillEllipse(DrawingBrushes.CornflowerBlue, 2, 2, 12, 12);
+        g.FillEllipse(DrawingBrushes.White, 4, 5, 3, 3);
+        g.FillEllipse(DrawingBrushes.White, 9, 5, 3, 3);
+        g.DrawArc(new DrawingPen(DrawingColor.White, 1.2f), 5, 9, 6, 3, 0, 180);
+        return DrawingIcon.FromHandle(bmp.GetHicon());
     }
 
     public void Dispose()

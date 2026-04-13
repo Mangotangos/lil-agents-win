@@ -21,7 +21,7 @@ public sealed class ClaudeSession : IAgentSession
 
     // ─── IAgentSession ────────────────────────────────────────────────────────
 
-    public async Task SendAsync(string message, CancellationToken ct = default)
+    public Task SendAsync(string message, CancellationToken ct = default)
     {
         Cancel();
         _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -49,6 +49,7 @@ public sealed class ClaudeSession : IAgentSession
             ?? throw new InvalidOperationException("Failed to start claude process.");
 
         _ = StreamOutputAsync(_cts.Token);
+        return Task.CompletedTask;
     }
 
     public void Cancel()
