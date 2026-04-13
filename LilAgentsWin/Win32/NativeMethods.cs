@@ -62,6 +62,22 @@ public static class TaskbarHelper
     }
 }
 
+// ─── HitTest helper ───────────────────────────────────────────────────────────
+
+public static class HitTestHelper
+{
+    public const int WM_NCHITTEST  = 0x0084;
+    public const int HTTRANSPARENT = -1;
+    public const int HTCLIENT      = 1;
+
+    /// <summary>Decode the lParam from WM_NCHITTEST into a screen Point.</summary>
+    public static System.Windows.Point DecodeScreenPoint(IntPtr lParam)
+    {
+        int val = lParam.ToInt32();
+        return new System.Windows.Point((short)(val & 0xFFFF), (short)((val >> 16) & 0xFFFF));
+    }
+}
+
 // ─── WindowHelper ─────────────────────────────────────────────────────────────
 
 public static class WindowHelper
@@ -78,21 +94,15 @@ public static class WindowHelper
     [DllImport("user32.dll")]
     private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
-    /// <summary>Make a window fully click-through — mouse events fall through to whatever is below.</summary>
-    public static void SetClickThrough(Window window)
+    /// <summary>
+    /// Set the walker window style: layered + tool window + no-activate.
+    /// WM_NCHITTEST handles per-pixel hit testing — no WS_EX_TRANSPARENT needed.
+    /// </summary>
+    public static void SetWalkerStyle(Window window)
     {
         var hwnd = new WindowInteropHelper(window).Handle;
         int ext  = GetWindowLong(hwnd, GWL_EXSTYLE);
         SetWindowLong(hwnd, GWL_EXSTYLE,
-            ext | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
-    }
-
-    /// <summary>Remove click-through so the window can receive mouse input normally.</summary>
-    public static void SetClickable(Window window)
-    {
-        var hwnd = new WindowInteropHelper(window).Handle;
-        int ext  = GetWindowLong(hwnd, GWL_EXSTYLE);
-        SetWindowLong(hwnd, GWL_EXSTYLE,
-            (ext & ~WS_EX_TRANSPARENT) | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
+            ext | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
     }
 }

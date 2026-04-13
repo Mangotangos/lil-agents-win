@@ -1,5 +1,5 @@
 using System.Windows;
-using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
@@ -18,7 +18,7 @@ public partial class WalkerWindow : Window
 
     private const double CharWidth    = 56;
     private const double CharHeight   = 72;
-    private const double WalkSpeed    = 1.8;  // px per tick at 60 fps
+    private const double WalkSpeed    = 0.9;  // px per tick at 60 fps (~54 px/s)
     private const double ArmSwingDeg  = 28.0;
     private const double LegBobPx     = 6.0;
     private const int    TickMs        = 16;   // ~60 fps
@@ -40,6 +40,7 @@ public partial class WalkerWindow : Window
     private int    _idleCountdown;
     private bool   _isIdle;
     private bool   _isHovered;
+    private double _charTop; // cached for hit-test
 
     // TransformGroup[0] = flip, TransformGroup[1] = hover scale — never overwrite each other
     private ScaleTransform _flipTransform  = new(1, 1, CharWidth / 2, 0);
@@ -68,13 +69,17 @@ public partial class WalkerWindow : Window
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         PositionOnTaskbar();
-        WindowHelper.SetClickThrough(this);
+        WindowHelper.SetWalkerStyle(this);
 
         // Combine flip + hover into one TransformGroup so they never overwrite each other
         var tg = new TransformGroup();
         tg.Children.Add(_flipTransform);
         tg.Children.Add(_hoverTransform);
         CharacterCanvas.RenderTransform = tg;
+
+        // Hook WM_NCHITTEST — transparent outside character, clickable over it
+        var src = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
+        src.AddHook(WndProc);
 
         _timer.Tick += OnTick;
         _timer.Start();
@@ -105,9 +110,9 @@ public partial class WalkerWindow : Window
         RootCanvas.Width  = tbW;
         RootCanvas.Height = tbH;
 
-        // Park character at the top of the taskbar strip
-        double charTop = (tbH - CharHeight) / 2.0;
-        System.Windows.Controls.Canvas.SetTop(CharacterCanvas, charTop);
+        // Park character vertically centred in the taskbar strip
+        _charTop = (tbH - CharHeight) / 2.0;
+        System.Windows.Controls.Canvas.SetTop(CharacterCanvas, _charTop);
     }
 
     // ─── Tick loop ────────────────────────────────────────────────────────────
@@ -115,7 +120,6 @@ public partial class WalkerWindow : Window
     private void OnTick(object? sender, EventArgs e)
     {
         _frameCounter++;
-        CheckHover();
 
         if (_isIdle)
         {
@@ -191,25 +195,30 @@ public partial class WalkerWindow : Window
         ThinkBubble.BeginAnimation(OpacityProperty, fade);
     }
 
-    // ─── Hover (click-through toggle) ────────────────────────────────────────
+    // ─── WM_NCHITTEST — per-pixel hit testing ────────────────────────────────
 
-    private void CheckHover()
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam,
+                           ref bool handled)
     {
-        var mouse  = System.Windows.Input.Mouse.GetPosition(this);
-        var left   = System.Windows.Controls.Canvas.GetLeft(CharacterCanvas);
-        var top    = System.Windows.Controls.Canvas.GetTop(CharacterCanvas);
-        bool over  = mouse.X >= left && mouse.X <= left + CharWidth &&
-                     mouse.Y >= top  && mouse.Y <= top  + CharHeight;
+        if (msg != HitTestHelper.WM_NCHITTEST) return IntPtr.Zero;
 
-        if (over && !_isHovered)
+        // Convert screen coords → window-local WPF DIPs
+        var screenPt  = HitTestHelper.DecodeScreenPoint(lParam);
+        var windowPt  = PointFromScreen(screenPt);
+
+        bool overChar = windowPt.X >= _posX              && windowPt.X <= _posX + CharWidth &&
+                        windowPt.Y >= _charTop            && windowPt.Y <= _charTop + CharHeight;
+
+        handled = true;
+        if (overChar)
         {
-            _isHovered = true;
-            WindowHelper.SetClickable(this);
+            if (!_isHovered) { _isHovered = true;  AnimateHoverScale(1.15); }
+            return new IntPtr(HitTestHelper.HTCLIENT);
         }
-        else if (!over && _isHovered)
+        else
         {
-            _isHovered = false;
-            WindowHelper.SetClickThrough(this);
+            if (_isHovered)  { _isHovered = false; AnimateHoverScale(1.0);  }
+            return new IntPtr(HitTestHelper.HTTRANSPARENT);
         }
     }
 
