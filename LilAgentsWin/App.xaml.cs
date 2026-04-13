@@ -18,8 +18,9 @@ public partial class App : Application
 
         _tray = new SystemTrayManager(OnQuit, OnProviderChanged, OnThemeChanged);
 
-        _characters.Add(new WalkerCharacter("Bruce", 0, _tray));
-        _characters.Add(new WalkerCharacter("Jazz",  1, _tray));
+        // Bruce = Claude (orange), Jazz = Copilot (blue-purple)
+        _characters.Add(new WalkerCharacter("Bruce", 0, AgentProvider.Claude,  WalkerWindow.ClaudePalette));
+        _characters.Add(new WalkerCharacter("Jazz",  1, AgentProvider.Copilot, WalkerWindow.CopilotPalette));
 
         foreach (var c in _characters)
             c.Start();

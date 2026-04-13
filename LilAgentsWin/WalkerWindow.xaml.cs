@@ -53,12 +53,42 @@ public partial class WalkerWindow : Window
     private AgentProvider _provider = AgentProvider.Claude;
     private ChatWindow?   _chatWindow;
 
+    // ─── Character palette ────────────────────────────────────────────────────
+
+    public record CharacterPalette(
+        string Body,    // head, arms
+        string Mid,     // torso
+        string Dark,    // legs, antenna line
+        string Accent,  // antenna orb, torso orb
+        string Eye      // eye pupils
+    );
+
+    public static readonly CharacterPalette ClaudePalette = new(
+        Body:   "#E07B54",
+        Mid:    "#C4623A",
+        Dark:   "#A84F2C",
+        Accent: "#FFB89A",
+        Eye:    "#2D0F00"
+    );
+
+    public static readonly CharacterPalette CopilotPalette = new(
+        Body:   "#6F42C1",
+        Mid:    "#5A32A3",
+        Dark:   "#4A2589",
+        Accent: "#C8B8FF",
+        Eye:    "#0D001A"
+    );
+
     // ─── Constructor ──────────────────────────────────────────────────────────
 
-    public WalkerWindow(int characterIndex)
+    private readonly CharacterPalette _palette;
+
+    public WalkerWindow(int characterIndex, AgentProvider provider, CharacterPalette palette)
     {
         InitializeComponent();
-        Loaded += OnLoaded;
+        _provider = provider;
+        _palette  = palette;
+        Loaded   += OnLoaded;
 
         // Offset second character so they don't overlap
         _posX = characterIndex == 0 ? 120 : 300;
@@ -69,6 +99,7 @@ public partial class WalkerWindow : Window
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         PositionOnTaskbar();
+        ApplyPalette(_palette);
         WindowHelper.SetWalkerStyle(this);
 
         // Combine flip + hover into one TransformGroup so they never overwrite each other
@@ -113,6 +144,28 @@ public partial class WalkerWindow : Window
         // Park character vertically centred in the taskbar strip
         _charTop = (tbH - CharHeight) / 2.0;
         System.Windows.Controls.Canvas.SetTop(CharacterCanvas, _charTop);
+    }
+
+    private void ApplyPalette(CharacterPalette p)
+    {
+        SolidColorBrush Brush(string hex) =>
+            new(System.Windows.Media.ColorConverter.ConvertFromString(hex) is System.Windows.Media.Color c ? c : Colors.White);
+
+        Head.Fill  = Brush(p.Body);
+        ArmL.Fill  = Brush(p.Body);
+        ArmR.Fill  = Brush(p.Body);
+        Torso.Fill = Brush(p.Mid);
+        LegL.Fill  = Brush(p.Dark);
+        LegR.Fill  = Brush(p.Dark);
+
+        Head.Stroke        = Brush(p.Dark);
+        AntennaLine.Stroke = Brush(p.Dark);
+
+        AntennaOrb.Fill = Brush(p.Accent);
+        TorsoOrb.Fill   = Brush(p.Accent);
+
+        EyeL.Fill = Brush(p.Eye);
+        EyeR.Fill = Brush(p.Eye);
     }
 
     // ─── Tick loop ────────────────────────────────────────────────────────────

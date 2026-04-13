@@ -12,10 +12,10 @@ public sealed class WalkerCharacter
 
     public string Name { get; }
 
-    public WalkerCharacter(string name, int index, SystemTrayManager tray)
+    public WalkerCharacter(string name, int index, AgentProvider provider, WalkerWindow.CharacterPalette palette)
     {
         Name    = name;
-        _window = new WalkerWindow(index);
+        _window = new WalkerWindow(index, provider, palette);
     }
 
     public void Start()
