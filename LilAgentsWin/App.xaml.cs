@@ -16,7 +16,7 @@ public partial class App : Application
         // WinForms required for NotifyIcon
         System.Windows.Forms.Application.EnableVisualStyles();
 
-        _tray = new SystemTrayManager(OnQuit, OnProviderChanged, OnThemeChanged);
+        _tray = new SystemTrayManager(OnQuit, OnThemeChanged);
 
         // Bruce = Claude (orange), Jazz = Copilot (blue-purple)
         _characters.Add(new WalkerCharacter("Bruce", 0, AgentProvider.Claude,  WalkerWindow.ClaudePalette));
@@ -32,12 +32,6 @@ public partial class App : Application
             c.Stop();
         _tray?.Dispose();
         Shutdown();
-    }
-
-    private void OnProviderChanged(AgentProvider provider)
-    {
-        foreach (var c in _characters)
-            c.SetProvider(provider);
     }
 
     private void OnThemeChanged(PopoverTheme theme)
