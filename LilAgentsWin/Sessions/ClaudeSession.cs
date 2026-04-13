@@ -36,6 +36,7 @@ public sealed class ClaudeSession : IAgentSession
         var psi = new ProcessStartInfo
         {
             UseShellExecute        = false,
+            RedirectStandardInput  = true,
             RedirectStandardOutput = true,
             RedirectStandardError  = true,
             CreateNoWindow         = true,
@@ -61,6 +62,8 @@ public sealed class ClaudeSession : IAgentSession
 
         _process = Process.Start(psi)
             ?? throw new InvalidOperationException("Failed to start claude process.");
+
+        _process.StandardInput.Close(); // signal EOF so claude doesn't wait for input
 
         _ = StreamOutputAsync(_cts.Token);
         _ = DrainStderrAsync(_cts.Token);

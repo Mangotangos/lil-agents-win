@@ -25,6 +25,7 @@ public sealed class GeminiSession : IAgentSession
         psi.ArgumentList.Add(message);
 
         _process = Process.Start(psi)!;
+        _process.StandardInput.Close();
         _ = StreamAsync(_cts.Token);
         _ = DrainStderrAsync(_cts.Token);
         await Task.CompletedTask;
@@ -75,6 +76,7 @@ public sealed class GeminiSession : IAgentSession
         var psi = new ProcessStartInfo
         {
             UseShellExecute        = false,
+            RedirectStandardInput  = true,
             RedirectStandardOutput = true,
             RedirectStandardError  = true,
             CreateNoWindow         = true,

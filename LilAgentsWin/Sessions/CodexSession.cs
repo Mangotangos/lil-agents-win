@@ -25,6 +25,7 @@ public sealed class CodexSession : IAgentSession
         psi.ArgumentList.Add(message);
 
         _process = Process.Start(psi)!;
+        _process.StandardInput.Close();
         _ = StreamAsync(_cts.Token);
         _ = DrainStderrAsync(_cts.Token);
         await Task.CompletedTask;
@@ -72,7 +73,7 @@ public sealed class CodexSession : IAgentSession
 
     private static ProcessStartInfo BuildPsi(string binary)
     {
-        var psi = new ProcessStartInfo { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
+        var psi = new ProcessStartInfo { UseShellExecute = false, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
         if (ShellEnvironment.NeedsCmdWrapper(binary)) { psi.FileName = "cmd.exe"; psi.ArgumentList.Add("/c"); psi.ArgumentList.Add(binary); }
         else psi.FileName = binary;
         return psi;
