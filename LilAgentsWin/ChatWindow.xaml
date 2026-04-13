@@ -1,0 +1,118 @@
+<Window x:Class="LilAgentsWin.ChatWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="lil-agents"
+        Width="380" Height="520"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        ShowInTaskbar="False"
+        Topmost="True">
+
+    <Border x:Name="RootBorder"
+            CornerRadius="12"
+            BorderThickness="1"
+            MouseLeftButtonDown="TitleBar_MouseDown">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="38"/>   <!-- title bar -->
+                <RowDefinition Height="*"/>    <!-- message area -->
+                <RowDefinition Height="1"/>    <!-- divider -->
+                <RowDefinition Height="44"/>   <!-- input row -->
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <Grid Grid.Row="0" x:Name="TitleBar">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="12,0">
+                    <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,5,0">
+                        <Ellipse.Fill>
+                            <SolidColorBrush x:Name="StatusDot" Color="#FF50C870"/>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <TextBlock x:Name="TitleLabel"
+                               Text="Claude"
+                               VerticalAlignment="Center"
+                               FontFamily="Consolas, Courier New, monospace"
+                               FontSize="12"
+                               FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Content="✕"
+                        Width="32" Height="32"
+                        Margin="4,0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="CloseButton_Click"
+                        FontSize="11"/>
+            </Grid>
+
+            <!-- Message area -->
+            <ScrollViewer x:Name="Scroller"
+                          Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Padding="0">
+                <ItemsControl x:Name="MessageList" Margin="10,6">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,3"
+                                    Padding="10,6"
+                                    CornerRadius="8"
+                                    Background="{Binding BubbleBrush}"
+                                    HorizontalAlignment="{Binding Alignment}"
+                                    MaxWidth="280">
+                                <TextBlock Text="{Binding Text}"
+                                           TextWrapping="Wrap"
+                                           Foreground="{Binding TextBrush}"
+                                           FontFamily="Consolas, Courier New, monospace"
+                                           FontSize="12"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Divider -->
+            <Rectangle x:Name="Divider" Grid.Row="2" Height="1"/>
+
+            <!-- Input row -->
+            <Grid Grid.Row="3" Margin="8,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="36"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox x:Name="InputBox"
+                         Grid.Column="0"
+                         VerticalAlignment="Center"
+                         Padding="8,6"
+                         BorderThickness="1"
+                         FontFamily="Consolas, Courier New, monospace"
+                         FontSize="12"
+                         AcceptsReturn="False"
+                         KeyDown="InputBox_KeyDown"
+                         VerticalContentAlignment="Center"/>
+
+                <Button x:Name="SendBtn"
+                        Grid.Column="1"
+                        Content="↑"
+                        Width="32" Height="32"
+                        Margin="4,0,0,0"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        FontSize="14"
+                        FontWeight="Bold"
+                        Click="SendBtn_Click"/>
+
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

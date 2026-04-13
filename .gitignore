@@ -1,0 +1,31 @@
+## .NET / C#
+bin/
+obj/
+dist/
+*.user
+*.suo
+.vs/
+*.DotSettings.user
+
+## Publish output
+publish/
+*.exe
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+
+## VS Code
+.vscode/
+
+## Rider
+.idea/
+
+## OS
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+## Secrets — never commit
+*.env
+appsettings.Local.json
+secrets.json

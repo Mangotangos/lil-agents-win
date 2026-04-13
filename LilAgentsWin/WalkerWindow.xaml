@@ -1,0 +1,141 @@
+<Window x:Class="LilAgentsWin.WalkerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LilAgentsWin"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        IsHitTestVisible="True">
+
+    <Canvas x:Name="RootCanvas" Background="Transparent">
+
+        <!-- Character container — position is set in code-behind -->
+        <Canvas x:Name="CharacterCanvas"
+                Width="56" Height="72"
+                Canvas.Left="0" Canvas.Top="0"
+                Cursor="Hand"
+                MouseLeftButtonDown="Character_Click"
+                MouseEnter="Character_MouseEnter"
+                MouseLeave="Character_MouseLeave">
+
+            <!-- ── Body (robot / mascot shape) ─────────────────────────────── -->
+            <!-- Head -->
+            <Ellipse x:Name="Head"
+                     Width="36" Height="32"
+                     Canvas.Left="10" Canvas.Top="0"
+                     Fill="#FF6B9EFF" Stroke="#FF4A7ED9" StrokeThickness="1.5"/>
+
+            <!-- Eyes -->
+            <Ellipse Width="7" Height="7"
+                     Canvas.Left="17" Canvas.Top="9"
+                     Fill="White"/>
+            <Ellipse x:Name="EyeL"
+                     Width="4" Height="4"
+                     Canvas.Left="18.5" Canvas.Top="10.5"
+                     Fill="#FF1A1A2E"/>
+
+            <Ellipse Width="7" Height="7"
+                     Canvas.Left="32" Canvas.Top="9"
+                     Fill="White"/>
+            <Ellipse x:Name="EyeR"
+                     Width="4" Height="4"
+                     Canvas.Left="33.5" Canvas.Top="10.5"
+                     Fill="#FF1A1A2E"/>
+
+            <!-- Mouth -->
+            <Path x:Name="Mouth"
+                  Stroke="White" StrokeThickness="1.8"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                  Data="M 20 23 Q 28 28 36 23"/>
+
+            <!-- Antenna -->
+            <Line X1="28" Y1="0" X2="28" Y2="-6"
+                  Stroke="#FF4A7ED9" StrokeThickness="2"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+            <Ellipse Width="5" Height="5"
+                     Canvas.Left="25.5" Canvas.Top="-11"
+                     Fill="#FFFF9A70"/>
+
+            <!-- Torso -->
+            <Rectangle x:Name="Torso"
+                       Width="30" Height="24"
+                       Canvas.Left="13" Canvas.Top="30"
+                       Fill="#FF5A8FFF"
+                       RadiusX="4" RadiusY="4"/>
+
+            <!-- Torso detail -->
+            <Ellipse Width="6" Height="6"
+                     Canvas.Left="25" Canvas.Top="36"
+                     Fill="#FFFF9A70" Opacity="0.8"/>
+
+            <!-- Left arm -->
+            <Rectangle x:Name="ArmL"
+                       Width="8" Height="18"
+                       Canvas.Left="4" Canvas.Top="31"
+                       Fill="#FF6B9EFF"
+                       RadiusX="4" RadiusY="4"
+                       RenderTransformOrigin="0.5,0">
+                <Rectangle.RenderTransform>
+                    <RotateTransform x:Name="ArmLRotate" Angle="0"/>
+                </Rectangle.RenderTransform>
+            </Rectangle>
+
+            <!-- Right arm -->
+            <Rectangle x:Name="ArmR"
+                       Width="8" Height="18"
+                       Canvas.Left="44" Canvas.Top="31"
+                       Fill="#FF6B9EFF"
+                       RadiusX="4" RadiusY="4"
+                       RenderTransformOrigin="0.5,0">
+                <Rectangle.RenderTransform>
+                    <RotateTransform x:Name="ArmRRotate" Angle="0"/>
+                </Rectangle.RenderTransform>
+            </Rectangle>
+
+            <!-- Left leg -->
+            <Rectangle x:Name="LegL"
+                       Width="10" Height="16"
+                       Canvas.Left="15" Canvas.Top="52"
+                       Fill="#FF4A7ED9"
+                       RadiusX="4" RadiusY="4"
+                       RenderTransformOrigin="0.5,0">
+                <Rectangle.RenderTransform>
+                    <TranslateTransform x:Name="LegLTranslate" Y="0"/>
+                </Rectangle.RenderTransform>
+            </Rectangle>
+
+            <!-- Right leg -->
+            <Rectangle x:Name="LegR"
+                       Width="10" Height="16"
+                       Canvas.Left="31" Canvas.Top="52"
+                       Fill="#FF4A7ED9"
+                       RadiusX="4" RadiusY="4"
+                       RenderTransformOrigin="0.5,0">
+                <Rectangle.RenderTransform>
+                    <TranslateTransform x:Name="LegRTranslate" Y="0"/>
+                </Rectangle.RenderTransform>
+            </Rectangle>
+
+        </Canvas>
+
+        <!-- Thinking bubble (shown when idle) -->
+        <StackPanel x:Name="ThinkBubble"
+                    Orientation="Horizontal"
+                    Canvas.Left="0" Canvas.Top="-28"
+                    Opacity="0">
+            <Border Background="#CC1A1A2E"
+                    CornerRadius="8"
+                    Padding="6,3">
+                <TextBlock x:Name="ThinkText"
+                           Text="..."
+                           Foreground="#FFC8D8FF"
+                           FontFamily="Segoe UI"
+                           FontSize="10"/>
+            </Border>
+        </StackPanel>
+
+    </Canvas>
+</Window>
