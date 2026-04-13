@@ -19,8 +19,8 @@ public partial class WalkerWindow : Window
     private const double CharWidth    = 56;
     private const double CharHeight   = 72;
     private const double WalkSpeed    = 1.8;  // px per tick at 60 fps
-    private const double ArmSwingDeg  = 20.0;
-    private const double LegBobPx     = 4.0;
+    private const double ArmSwingDeg  = 28.0;
+    private const double LegBobPx     = 6.0;
     private const int    TickMs        = 16;   // ~60 fps
 
     private static readonly string[] ThinkPhrases =
@@ -40,6 +40,10 @@ public partial class WalkerWindow : Window
     private int    _idleCountdown;
     private bool   _isIdle;
     private bool   _isHovered;
+
+    // TransformGroup[0] = flip, TransformGroup[1] = hover scale — never overwrite each other
+    private ScaleTransform _flipTransform  = new(1, 1, CharWidth / 2, 0);
+    private ScaleTransform _hoverTransform = new(1, 1, CharWidth / 2, CharHeight / 2);
 
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(TickMs) };
     private readonly Random          _rng   = new();
@@ -65,6 +69,12 @@ public partial class WalkerWindow : Window
     {
         PositionOnTaskbar();
         WindowHelper.SetClickThrough(this);
+
+        // Combine flip + hover into one TransformGroup so they never overwrite each other
+        var tg = new TransformGroup();
+        tg.Children.Add(_flipTransform);
+        tg.Children.Add(_hoverTransform);
+        CharacterCanvas.RenderTransform = tg;
 
         _timer.Tick += OnTick;
         _timer.Start();
@@ -126,10 +136,8 @@ public partial class WalkerWindow : Window
         System.Windows.Controls.Canvas.SetLeft(CharacterCanvas, _posX);
         System.Windows.Controls.Canvas.SetLeft(ThinkBubble,    _posX);
 
-        // Flip sprite direction
-        CharacterCanvas.RenderTransform = _direction == 1
-            ? System.Windows.Media.Transform.Identity
-            : new System.Windows.Media.ScaleTransform(-1, 1, CharWidth / 2.0, 0);
+        // Flip sprite — only update the flip transform, leave hover transform untouched
+        _flipTransform.ScaleX = _direction == 1 ? 1 : -1;
 
         // Walk animation every 8 ticks
         if (_frameCounter % 8 == 0)
@@ -143,15 +151,19 @@ public partial class WalkerWindow : Window
 
     private void AnimateWalk(int frame)
     {
-        // Arm swing
-        double armAngle = frame switch { 0 => -ArmSwingDeg, 1 => 0, 2 => ArmSwingDeg, _ => 0 };
-        ArmLRotate.Angle =  armAngle;
-        ArmRRotate.Angle = -armAngle;
+        var dur = new Duration(TimeSpan.FromMilliseconds(120));
 
-        // Leg bob: legs alternate up/down
+        // Arms swing opposite each other
+        double armAngle = frame switch { 0 => -ArmSwingDeg, 1 => 0, 2 => ArmSwingDeg, _ => 0 };
+        ArmLRotate.BeginAnimation(RotateTransform.AngleProperty, new DoubleAnimation( armAngle, dur));
+        ArmRRotate.BeginAnimation(RotateTransform.AngleProperty, new DoubleAnimation(-armAngle, dur));
+
+        // Legs alternate up/down
         bool leftUp = frame is 0 or 1;
-        LegLTranslate.Y = leftUp  ? -LegBobPx : 0;
-        LegRTranslate.Y = !leftUp ? -LegBobPx : 0;
+        LegLTranslate.BeginAnimation(TranslateTransform.YProperty,
+            new DoubleAnimation(leftUp  ? -LegBobPx : 0, dur));
+        LegRTranslate.BeginAnimation(TranslateTransform.YProperty,
+            new DoubleAnimation(!leftUp ? -LegBobPx : 0, dur));
     }
 
     // ─── Idle ─────────────────────────────────────────────────────────────────
@@ -205,13 +217,19 @@ public partial class WalkerWindow : Window
 
     private void Character_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
     {
-        // Scale up slightly on hover
-        CharacterCanvas.RenderTransform = new System.Windows.Media.ScaleTransform(1.1, 1.1, CharWidth / 2, CharHeight / 2);
+        AnimateHoverScale(to: 1.15);
     }
 
     private void Character_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
     {
-        CharacterCanvas.RenderTransform = null;
+        AnimateHoverScale(to: 1.0);
+    }
+
+    private void AnimateHoverScale(double to)
+    {
+        var dur = new Duration(TimeSpan.FromMilliseconds(120));
+        _hoverTransform.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(to, dur));
+        _hoverTransform.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(to, dur));
     }
 
     private void Character_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)

@@ -20,15 +20,9 @@ public sealed class CodexSession : IAgentSession
         var binary = ShellEnvironment.FindBinary("codex")
             ?? throw new InvalidOperationException(ShellEnvironment.InstallHint(AgentProvider.Codex));
 
-        var psi = new ProcessStartInfo
-        {
-            FileName               = binary,
-            Arguments              = $"-q \"{Escape(message)}\"",
-            UseShellExecute        = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError  = true,
-            CreateNoWindow         = true,
-        };
+        var psi = BuildPsi(binary);
+        psi.ArgumentList.Add("-q");
+        psi.ArgumentList.Add(message);
 
         _process = Process.Start(psi)!;
         _ = StreamAsync(_cts.Token);
@@ -60,5 +54,11 @@ public sealed class CodexSession : IAgentSession
         finally { OnDone?.Invoke(); }
     }
 
-    private static string Escape(string s) => s.Replace("\"", "\\\"").Replace("\n", " ");
+    private static ProcessStartInfo BuildPsi(string binary)
+    {
+        var psi = new ProcessStartInfo { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
+        if (ShellEnvironment.NeedsCmdWrapper(binary)) { psi.FileName = "cmd.exe"; psi.ArgumentList.Add("/c"); psi.ArgumentList.Add(binary); }
+        else psi.FileName = binary;
+        return psi;
+    }
 }

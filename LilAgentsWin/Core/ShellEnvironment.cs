@@ -63,6 +63,14 @@ public static class ShellEnvironment
 
     public static bool IsBinaryAvailable(string name) => FindBinary(name) is not null;
 
+    /// <summary>
+    /// Returns true when the binary needs to be launched via <c>cmd.exe /c</c>
+    /// (i.e. it is a .cmd or .bat script — common for npm-installed CLIs on Windows).
+    /// </summary>
+    public static bool NeedsCmdWrapper(string binaryPath) =>
+        binaryPath.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase) ||
+        binaryPath.EndsWith(".bat", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>Returns the install hint for a provider whose binary is missing.</summary>
     public static string InstallHint(AgentProvider provider) => provider switch
     {

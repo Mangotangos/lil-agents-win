@@ -20,15 +20,9 @@ public sealed class GeminiSession : IAgentSession
         var binary = ShellEnvironment.FindBinary("gemini")
             ?? throw new InvalidOperationException(ShellEnvironment.InstallHint(AgentProvider.Gemini));
 
-        var psi = new ProcessStartInfo
-        {
-            FileName               = binary,
-            Arguments              = $"-p \"{Escape(message)}\"",
-            UseShellExecute        = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError  = true,
-            CreateNoWindow         = true,
-        };
+        var psi = BuildPsi(binary);
+        psi.ArgumentList.Add("-p");
+        psi.ArgumentList.Add(message);
 
         _process = Process.Start(psi)!;
         _ = StreamAsync(_cts.Token);
@@ -60,5 +54,22 @@ public sealed class GeminiSession : IAgentSession
         finally { OnDone?.Invoke(); }
     }
 
-    private static string Escape(string s) => s.Replace("\"", "\\\"").Replace("\n", " ");
+    private static ProcessStartInfo BuildPsi(string binary)
+    {
+        var psi = new ProcessStartInfo
+        {
+            UseShellExecute        = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError  = true,
+            CreateNoWindow         = true,
+        };
+        if (ShellEnvironment.NeedsCmdWrapper(binary))
+        {
+            psi.FileName = "cmd.exe";
+            psi.ArgumentList.Add("/c");
+            psi.ArgumentList.Add(binary);
+        }
+        else psi.FileName = binary;
+        return psi;
+    }
 }

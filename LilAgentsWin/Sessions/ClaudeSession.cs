@@ -36,14 +36,30 @@ public sealed class ClaudeSession : IAgentSession
 
         var psi = new ProcessStartInfo
         {
-            FileName               = binary,
-            Arguments              = $"--output-format stream-json --print --no-update-check \"{EscapeArg(prompt)}\"",
             UseShellExecute        = false,
             RedirectStandardOutput = true,
             RedirectStandardError  = true,
             CreateNoWindow         = true,
             StandardOutputEncoding = Encoding.UTF8,
         };
+
+        // npm-installed CLIs on Windows are .cmd scripts — must run via cmd.exe
+        if (ShellEnvironment.NeedsCmdWrapper(binary))
+        {
+            psi.FileName = "cmd.exe";
+            psi.ArgumentList.Add("/c");
+            psi.ArgumentList.Add(binary);
+        }
+        else
+        {
+            psi.FileName = binary;
+        }
+
+        psi.ArgumentList.Add("--output-format");
+        psi.ArgumentList.Add("stream-json");
+        psi.ArgumentList.Add("--print");
+        psi.ArgumentList.Add("--no-update-check");
+        psi.ArgumentList.Add(prompt);
 
         _process = Process.Start(psi)
             ?? throw new InvalidOperationException("Failed to start claude process.");
@@ -73,9 +89,6 @@ public sealed class ClaudeSession : IAgentSession
         sb.Append(latest);
         return sb.ToString();
     }
-
-    private static string EscapeArg(string s) =>
-        s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "").Replace("\n", " ");
 
     // ─── Internal ─────────────────────────────────────────────────────────────
 

@@ -25,6 +25,13 @@ Thumbs.db
 .DS_Store
 Desktop.ini
 
+## Release artifacts
+*.zip
+dist/
+
+## Internal tooling
+.insaits_*
+
 ## Secrets — never commit
 *.env
 appsettings.Local.json
