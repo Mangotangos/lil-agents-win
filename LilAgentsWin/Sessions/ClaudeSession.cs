@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text;
-using System.Text.Json;
 using LilAgentsWin.Core;
 
 namespace LilAgentsWin.Sessions;
@@ -56,9 +55,8 @@ public sealed class ClaudeSession : IAgentSession
         }
 
         psi.ArgumentList.Add("--output-format");
-        psi.ArgumentList.Add("stream-json");
+        psi.ArgumentList.Add("text");
         psi.ArgumentList.Add("--print");
-        psi.ArgumentList.Add("--no-update-check");
         psi.ArgumentList.Add(prompt);
 
         _process = Process.Start(psi)
@@ -100,8 +98,9 @@ public sealed class ClaudeSession : IAgentSession
             while (!_process!.StandardOutput.EndOfStream && !ct.IsCancellationRequested)
             {
                 var line = await _process.StandardOutput.ReadLineAsync(ct);
-                if (string.IsNullOrEmpty(line)) continue;
-                ParseLine(line, assistant);
+                if (line is null) continue;
+                assistant.Append(line + "\n");
+                OnOutput?.Invoke(line + "\n");
             }
         }
         catch (OperationCanceledException) { }
@@ -115,35 +114,6 @@ public sealed class ClaudeSession : IAgentSession
                 _history.Add(new ConversationTurn("assistant", assistant.ToString()));
             OnDone?.Invoke();
         }
-    }
-
-    private void ParseLine(string line, StringBuilder assistant)
-    {
-        try
-        {
-            using var doc  = JsonDocument.Parse(line);
-            var root = doc.RootElement;
-
-            if (!root.TryGetProperty("type", out var typeEl)) return;
-
-            switch (typeEl.GetString())
-            {
-                case "content_block_delta":
-                    if (root.TryGetProperty("delta", out var delta) &&
-                        delta.TryGetProperty("text", out var text))
-                    {
-                        var chunk = text.GetString() ?? string.Empty;
-                        assistant.Append(chunk);
-                        OnOutput?.Invoke(chunk);
-                    }
-                    break;
-
-                case "message_stop":
-                    // signal handled in finally block
-                    break;
-            }
-        }
-        catch (JsonException) { /* ignore non-JSON lines (e.g. progress spinners) */ }
     }
 
     private record ConversationTurn(string role, string content);
