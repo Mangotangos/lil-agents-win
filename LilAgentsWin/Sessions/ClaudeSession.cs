@@ -42,6 +42,7 @@ public sealed class ClaudeSession : IAgentSession
             CreateNoWindow         = true,
             StandardOutputEncoding = Encoding.UTF8,
         };
+        psi.Environment["CI"] = "true"; // suppress interactive prompts/hooks
 
         // npm-installed CLIs on Windows are .cmd scripts — must run via cmd.exe
         if (ShellEnvironment.NeedsCmdWrapper(binary))
@@ -97,21 +98,33 @@ public sealed class ClaudeSession : IAgentSession
     private async Task StreamOutputAsync(CancellationToken ct)
     {
         var assistant = new StringBuilder();
+
+        // Cancel reading 1 s after the main process exits so hook subprocesses
+        // cannot hold the stdout pipe open indefinitely.
+        using var drainCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _process!.WaitForExitAsync(ct);
+                await Task.Delay(1000, ct);
+            }
+            catch { }
+            finally { drainCts.Cancel(); }
+        }, ct);
+
         try
         {
-            while (!_process!.StandardOutput.EndOfStream && !ct.IsCancellationRequested)
+            while (!drainCts.Token.IsCancellationRequested)
             {
-                var line = await _process.StandardOutput.ReadLineAsync(ct);
-                if (line is null) continue;
+                var line = await _process!.StandardOutput.ReadLineAsync(drainCts.Token);
+                if (line is null) break;
                 assistant.Append(line + "\n");
                 OnOutput?.Invoke(line + "\n");
             }
         }
         catch (OperationCanceledException) { }
-        catch (Exception ex)
-        {
-            OnError?.Invoke($"Stream error: {ex.Message}");
-        }
+        catch (Exception ex) { OnError?.Invoke($"Stream error: {ex.Message}"); }
         finally
         {
             if (assistant.Length > 0)

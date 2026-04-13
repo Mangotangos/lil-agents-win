@@ -148,7 +148,7 @@ public partial class ChatWindow : Window
 
         _session.OnOutput += chunk =>
         {
-            Dispatcher.Invoke(() =>
+            Dispatcher.BeginInvoke(() =>
             {
                 if (_streamingItem is null)
                 {
@@ -162,7 +162,7 @@ public partial class ChatWindow : Window
 
         _session.OnError += err =>
         {
-            Dispatcher.Invoke(() =>
+            Dispatcher.BeginInvoke(() =>
             {
                 AddMessage($"⚠ {err}", isUser: false);
                 SetStatusDot(Colors.OrangeRed);
@@ -171,7 +171,7 @@ public partial class ChatWindow : Window
 
         _session.OnDone += () =>
         {
-            Dispatcher.Invoke(() =>
+            Dispatcher.BeginInvoke(() =>
             {
                 _streamingItem = null;
                 SetStatusDot(Colors.LimeGreen);
