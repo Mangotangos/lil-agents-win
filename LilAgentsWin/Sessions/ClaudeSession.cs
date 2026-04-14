@@ -64,10 +64,9 @@ public sealed class ClaudeSession : IAgentSession
         _process = Process.Start(psi)
             ?? throw new InvalidOperationException("Failed to start claude process.");
 
-        _process.StandardInput.Close(); // signal EOF so claude doesn't wait for input
+        _process.StandardInput.Close();
 
-        _ = StreamOutputAsync(_cts.Token);
-        _ = DrainStderrAsync(_cts.Token);
+        _ = ReadOutputAsync(_cts.Token);
         return Task.CompletedTask;
     }
 
@@ -95,57 +94,42 @@ public sealed class ClaudeSession : IAgentSession
 
     // ─── Internal ─────────────────────────────────────────────────────────────
 
-    private async Task StreamOutputAsync(CancellationToken ct)
+    private async Task ReadOutputAsync(CancellationToken ct)
     {
         var assistant = new StringBuilder();
-
-        // Cancel reading 1 s after the main process exits so hook subprocesses
-        // cannot hold the stdout pipe open indefinitely.
-        using var drainCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await _process!.WaitForExitAsync(ct);
-                await Task.Delay(1000, ct);
-            }
-            catch { }
-            finally { drainCts.Cancel(); }
-        }, ct);
-
         try
         {
-            while (!drainCts.Token.IsCancellationRequested)
+            // Read stdout and stderr concurrently — avoids pipe deadlock.
+            // Use a 90-second hard timeout in case hooks block indefinitely.
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+            using var linked  = CancellationTokenSource.CreateLinkedTokenSource(ct, timeout.Token);
+
+            var stdoutTask = _process!.StandardOutput.ReadToEndAsync(linked.Token);
+            var stderrTask = _process!.StandardError.ReadToEndAsync(linked.Token);
+
+            await Task.WhenAll(stdoutTask, stderrTask);
+
+            var text = stdoutTask.Result.Trim();
+            if (!string.IsNullOrEmpty(text))
             {
-                var line = await _process!.StandardOutput.ReadLineAsync(drainCts.Token);
-                if (line is null) break;
-                assistant.Append(line + "\n");
-                OnOutput?.Invoke(line + "\n");
+                assistant.Append(text);
+                OnOutput?.Invoke(text);
             }
         }
-        catch (OperationCanceledException) { }
-        catch (Exception ex) { OnError?.Invoke($"Stream error: {ex.Message}"); }
+        catch (OperationCanceledException)
+        {
+            OnError?.Invoke("Timed out waiting for response.");
+        }
+        catch (Exception ex)
+        {
+            OnError?.Invoke($"Error: {ex.Message}");
+        }
         finally
         {
             if (assistant.Length > 0)
                 _history.Add(new ConversationTurn("assistant", assistant.ToString()));
             OnDone?.Invoke();
         }
-    }
-
-    private async Task DrainStderrAsync(CancellationToken ct)
-    {
-        try
-        {
-            while (!_process!.StandardError.EndOfStream && !ct.IsCancellationRequested)
-            {
-                var line = await _process.StandardError.ReadLineAsync(ct);
-                if (line is not null && line.Length > 0)
-                    OnError?.Invoke(line);
-            }
-        }
-        catch (OperationCanceledException) { }
-        catch { }
     }
 
     private record ConversationTurn(string role, string content);
