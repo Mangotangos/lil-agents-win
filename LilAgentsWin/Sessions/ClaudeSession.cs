@@ -56,6 +56,7 @@ public sealed class ClaudeSession : IAgentSession
 
         psi.ArgumentList.Add("--output-format");
         psi.ArgumentList.Add("text");
+        psi.ArgumentList.Add("--dangerously-skip-permissions");
         psi.ArgumentList.Add("--print");
         psi.ArgumentList.Add(prompt);
 
@@ -99,7 +100,7 @@ public sealed class ClaudeSession : IAgentSession
         {
             // Read stdout and stderr concurrently — avoids pipe deadlock.
             // Use a 90-second hard timeout in case hooks block indefinitely.
-            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(180));
             using var linked  = CancellationTokenSource.CreateLinkedTokenSource(ct, timeout.Token);
 
             var stdoutTask = _process!.StandardOutput.ReadToEndAsync(linked.Token);
