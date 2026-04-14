@@ -79,6 +79,22 @@ public partial class WalkerWindow : Window
         Eye:    "#0D001A"
     );
 
+    public static readonly CharacterPalette GeminiPalette = new(
+        Body:   "#4285F4",
+        Mid:    "#2C6DC9",
+        Dark:   "#1A54A8",
+        Accent: "#A8C8FF",
+        Eye:    "#001033"
+    );
+
+    public static readonly CharacterPalette CodexPalette = new(
+        Body:   "#10A37F",
+        Mid:    "#0D8A6C",
+        Dark:   "#097058",
+        Accent: "#7FFFD4",
+        Eye:    "#001A14"
+    );
+
     // ─── Constructor ──────────────────────────────────────────────────────────
 
     private readonly CharacterPalette _palette;
@@ -90,8 +106,8 @@ public partial class WalkerWindow : Window
         _palette  = palette;
         Loaded   += OnLoaded;
 
-        // Offset second character so they don't overlap
-        _posX = characterIndex == 0 ? 120 : 300;
+        // Space characters evenly across the taskbar
+        _posX = 80 + characterIndex * 170;
     }
 
     // ─── Startup ──────────────────────────────────────────────────────────────
