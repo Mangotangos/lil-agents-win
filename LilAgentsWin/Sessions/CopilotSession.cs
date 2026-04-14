@@ -17,13 +17,12 @@ public sealed class CopilotSession : IAgentSession
         Cancel();
         _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
-        var binary = ShellEnvironment.FindBinary("copilot")
+        var binary = ShellEnvironment.FindBinary("gh")
             ?? throw new InvalidOperationException(ShellEnvironment.InstallHint(AgentProvider.Copilot));
 
         var psi = BuildPsi(binary);
-        psi.ArgumentList.Add("suggest");
-        psi.ArgumentList.Add("-t");
-        psi.ArgumentList.Add("shell");
+        psi.ArgumentList.Add("copilot");
+        psi.ArgumentList.Add("explain");
         psi.ArgumentList.Add(message);
 
         _process = Process.Start(psi)!;

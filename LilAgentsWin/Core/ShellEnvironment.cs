@@ -77,7 +77,7 @@ public static class ShellEnvironment
         AgentProvider.Claude  => "Install Claude Code from https://claude.ai/download",
         AgentProvider.Gemini  => "npm install -g @google/gemini-cli",
         AgentProvider.Codex   => "npm install -g @openai/codex",
-        AgentProvider.Copilot => "npm install -g @githubnext/github-copilot-cli",
+        AgentProvider.Copilot => "Install GitHub CLI (https://cli.github.com) then run: gh extension install github/gh-copilot",
         _                     => "Install the required CLI tool.",
     };
 }

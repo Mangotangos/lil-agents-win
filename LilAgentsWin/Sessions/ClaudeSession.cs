@@ -42,8 +42,6 @@ public sealed class ClaudeSession : IAgentSession
             CreateNoWindow         = true,
             StandardOutputEncoding = Encoding.UTF8,
         };
-        psi.Environment["CI"] = "true"; // suppress interactive prompts/hooks
-
         // npm-installed CLIs on Windows are .cmd scripts — must run via cmd.exe
         if (ShellEnvironment.NeedsCmdWrapper(binary))
         {
